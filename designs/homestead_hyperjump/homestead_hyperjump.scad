@@ -30,6 +30,7 @@ chance_w = 71;  chance_h = 100;
 char_w = 80;    char_h = 120;    // characters + micro-expansion + SOS share a well
 sd_w = 70;      sd_h = 70;       // Sector Data and "You have Died"
 small_w = 44;   small_h = 67;    // Salvage, Assignment
+salvage_t = 24;                  // Salvage deck 23.17 mm thick + 0.8 slack
 
 /* [Hex tiles] */
 // Tile is a regular hex: 39 across the flats, 44 across the points (note had them swapped)
@@ -66,9 +67,9 @@ function tray_cmp(t) = tray_total(t) - 3*wall;
 cmp_h = tray_cmp(tray);
 box_urz = cmp_h + 2*wall;   // the sliding lid adds one more wall on top
 
-function feat(name, w, d, x, y, cut=false, cut_pct=100) = [ BOX_FEATURE,
+function feat(name, w, d, x, y, cut=false, cut_pct=100, cz=undef) = [ BOX_FEATURE,
     [ NAME, name ],
-    [ FTR_COMPARTMENT_SIZE_XYZ, [w + pad, d + pad, cmp_h] ],
+    [ FTR_COMPARTMENT_SIZE_XYZ, [w + pad, d + pad, is_undef(cz) ? cmp_h : cz] ],   // cz < cmp_h lifts the well floor
     [ POSITION_XY, [x, y] ],
     [ FTR_CUTOUT_SIDES_4B, [cut, false, false, false] ],
     [ FTR_CUTOUT_HEIGHT_PCT, cut_pct ],   // <100 leaves a lip so small parts cannot slide out
@@ -119,8 +120,8 @@ function tray_features(t) =
             // bars stacked flat, with a free strip beside the stack to grip them
             feat("Credit bars x3 (31.8 x 7.7 x 4.6)", 33, 22, 0, dice_well + pad + g + 49.5 + pad + g) ] :
     t == "cards_small"   // standing on the 44 mm edge
-        ? [ feat("Salvage",    20, small_h, 0, 0, true),
-            feat("Assignment", 20, small_h, 20 + pad + g, 0, true) ] :
+        ? [ feat("Salvage",    salvage_t, small_h, 0, 0, true, 50, small_w + 0.5),       // deck 23.17 mm thick (caliper 2026-11-14); cards stand 44 high: floor lifted so they sit flush with the top
+            feat("Assignment", 20, small_h, salvage_t + pad + g, 0, true, 50, small_w + 0.5) ] :
     /* ship */ [ feat("Ship", ship_w, ship_l, 0, 0) ];
 
 // Outer footprint [w, d] of every tray, stretched so the trays tile the box
