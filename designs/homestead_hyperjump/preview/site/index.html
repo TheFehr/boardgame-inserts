@@ -33,7 +33,7 @@ let mesh, cur;
 function size() { const v = cv.parentElement; r.setSize(v.clientWidth, v.clientHeight, false); cam.aspect = v.clientWidth / v.clientHeight; cam.updateProjectionMatrix(); }
 addEventListener('resize', size); size();
 (function loop() { requestAnimationFrame(loop); ctl.update(); r.render(scene, cam); })();
-async function showAll() {
+async function showAll(layers = true) {
   cur = 'all'; if (mesh) scene.remove(mesh);
   const L = await (await fetch('./pregen/layout.json?' + Date.now())).json();
   const grp = new THREE.Group(); const [W, D, H] = L.box;
@@ -52,23 +52,29 @@ async function showAll() {
   const other = { characters: 0x388bfd, misc_top: 0x39c5cf, misc_tokens: 0x1f9aa6, cards_small: 0xa0714f, ship: 0xe6edf3 };
   const deck = { green: 0x3fb950, yellow: 0xe3891d, red: 0xf85149 };
   const shade = { chance: 0, sector: 0.14, hex: -0.14 };   // same deck colour, three shades
-  for (const t of L.trays) {
+  const swap = new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,0,1);   // STL z-up -> three y-up
+  await Promise.all(L.trays.map(async (t) => {
     const [kind, col] = t.name.split('_');
     const c = new THREE.Color(deck[col] ?? other[t.name]);
     if (deck[col]) c.offsetHSL(0, 0, shade[kind]);
-    add(t.x, t.y, t.z, t.w, t.d, t.h, c);
-  }
+    const g = await new STLLoader().loadAsync(`./pregen/box/${t.name}.stl`);
+    g.applyMatrix4(swap); g.translate(t.x - IN / 2, t.z, t.y - IN / 2);
+    grp.add(new THREE.Mesh(g, new THREE.MeshPhongMaterial({ color: c, flatShading: true, side: THREE.DoubleSide })));
+  }));
   const l = L.layers;
-  add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.9);       // 6 player boards
-  add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.9); // 3 booklets
-  add(l.rulebook.x, l.rulebook.y, l.rulebook.z, l.rulebook.w, l.rulebook.d, l.rulebook.h, 0xd29922, 0.9);   // rule book
-  add(l.main.x, l.main.y, l.main.z, l.main.w, l.main.d, l.main.h, 0x6e7681, 0.95);                   // main board on top
+  if (layers) {
+    add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.45);       // 6 player boards
+    add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.45); // 3 booklets
+    add(l.rulebook.x, l.rulebook.y, l.rulebook.z, l.rulebook.w, l.rulebook.d, l.rulebook.h, 0xd29922, 0.45);   // rule book
+    add(l.main.x, l.main.y, l.main.z, l.main.w, l.main.d, l.main.h, 0x6e7681, 0.3);                   // main board on top
+  }
   mesh = grp; scene.add(grp);
   ctl.target.set(0, 35, 0); cam.position.set(320, 260, 380);
-  st.textContent = 'All trays in the box. Top to bottom: main board (grey), rule book (gold), booklets (blue, front-left), player boards (purple, back-left), trays. Box drawn at the measured 288 x 288 x 72.';
+  st.textContent = (layers ? '' : 'Top layers hidden. ') + 'All trays in the box (lids left off so you can see the wells). Top to bottom: main board (grey), rule book (gold), booklets (blue, front-left), player boards (purple, back-left), trays. Box drawn at the measured 288 x 288 x 72.';
 }
 async function show(t) {
   if (t === 'all') return showAll();
+  if (t === 'trays') return showAll(false);
   cur = t; st.textContent = 'Loading ' + t + '…';
   const g = await new STLLoader().loadAsync(`./pregen/${t}.stl?${Date.now()}`);
   if (mesh) scene.remove(mesh);
@@ -82,8 +88,9 @@ async function show(t) {
 }
 const trays = (await (await fetch('./pregen/trays.txt')).text()).trim().split('\n');
 sel.add(new Option('ALL trays in box', 'all'));
+sel.add(new Option('ALL trays, without the top layers', 'trays'));
 for (const t of trays) sel.add(new Option(t.replace(/_/g, ' '), t));
 sel.onchange = () => show(sel.value);
-document.getElementById('dl').onclick = () => { if (cur === 'all') return; const a = document.createElement('a'); a.href = `./pregen/${cur}.stl`; a.download = `hh-${cur}.stl`; a.click(); };
-show('all'); sel.value = 'all';
+document.getElementById('dl').onclick = () => { if (cur === 'all' || cur === 'trays') return; const a = document.createElement('a'); a.href = `./pregen/${cur}.stl`; a.download = `hh-${cur}.stl`; a.click(); };
+show('trays'); sel.value = 'trays';
 </script></body></html>

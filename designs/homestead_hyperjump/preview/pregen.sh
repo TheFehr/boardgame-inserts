@@ -10,4 +10,10 @@ for t in $TRAYS; do
   echo "== $t"
   /snap/bin/openscad-nightly -D "tray=\"$t\"" --export-format=binstl -o "$OUT/$t.stl" homestead_hyperjump.scad 2>&1 | grep -E 'ERROR' || true
 done
+# box-only STLs (no lid beside it) for the assembled 3D views
+mkdir -p "$OUT/box"
+for t in $TRAYS; do
+  echo "== box $t"
+  /snap/bin/openscad-nightly -D "tray=\"$t\"" -D '$g_print_types="box"' --export-format=binstl -o "$OUT/box/$t.stl" homestead_hyperjump.scad 2>&1 | grep -E 'ERROR' || true
+done
 echo "$TRAYS" | tr ' ' '\n' > "$OUT/trays.txt"

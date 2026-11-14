@@ -141,6 +141,7 @@
 
 <script type="module">
 import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
 const DESIGNS = [
   {
@@ -189,6 +190,7 @@ function renderFilters() {
 // Rotating 3D thumbnail: the trays and layers of the design as coloured blocks (from layout.json)
 const viewers = [];
 function makeViewer(canvas, layoutUrl) {
+  const base = layoutUrl.replace(/layout\.json$/, '');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x05070a);
@@ -211,14 +213,18 @@ function makeViewer(canvas, layoutUrl) {
     const other = { characters: 0x388bfd, misc_top: 0x39c5cf, misc_tokens: 0x1f9aa6, cards_small: 0xa0714f, ship: 0xe6edf3 };
     const deck = { green: 0x3fb950, yellow: 0xe3891d, red: 0xf85149 };
     const shade = { chance: 0, sector: 0.14, hex: -0.14 };
+    const swap = new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,0,1);   // STL z-up -> three y-up
     for (const t of L.trays) {
       const [kind, col] = t.name.split('_'); const c = new THREE.Color(deck[col] ?? other[t.name]);
       if (deck[col]) c.offsetHSL(0, 0, shade[kind]);
-      add(t.x, t.y, t.z, t.w, t.d, t.h, c);
+      new STLLoader().loadAsync(`${base}box/${t.name}.stl`).then(geo => {
+        geo.applyMatrix4(swap); geo.translate(t.x - N / 2, t.z, t.y - N / 2);
+        g.add(new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: c, flatShading: true, side: THREE.DoubleSide })));
+      });
     }
     const l = L.layers;
-    add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.9);
-    add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.9);
+    add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.35);
+    add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.3);
     scene.add(g); group = g;
     camera.position.set(330, 300, 330); camera.lookAt(0, 30, 0);
   });
