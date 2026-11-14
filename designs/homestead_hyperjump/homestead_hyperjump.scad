@@ -31,6 +31,7 @@ char_w = 80;    char_h = 120;    // characters + micro-expansion + SOS share a w
 sd_w = 70;      sd_h = 70;       // Sector Data and "You have Died"
 small_w = 44;   small_h = 67;    // Salvage, Assignment
 salvage_t = 24;                  // Salvage deck 23.17 mm thick + 0.8 slack
+// Assignment deck: 16.69 mm thick (caliper 2026-11-14), well 17.5
 
 /* [Hex tiles] */
 // Tile is a regular hex: 39 across the flats, 44 across the points (note had them swapped)
@@ -121,7 +122,7 @@ function tray_features(t) =
             feat("Credit bars x3 (31.8 x 7.7 x 4.6)", 33, 22, 0, dice_well + pad + g + 49.5 + pad + g) ] :
     t == "cards_small"   // standing on the 44 mm edge
         ? [ feat("Salvage",    salvage_t, small_h, 0, 0, true, 50, small_w + 0.5),       // deck 23.17 mm thick (caliper 2026-11-14); cards stand 44 high: floor lifted so they sit flush with the top
-            feat("Assignment", 20, small_h, salvage_t + pad + g, 0, true, 50, small_w + 0.5) ] :
+            feat("Assignment", 17.5, small_h, salvage_t + pad + g, 0, true, 50, small_w + 0.5) ] :
     /* ship */ [ feat("Ship", ship_w, ship_l, 0, 0) ];
 
 // Outer footprint [w, d] of every tray, stretched so the trays tile the box
