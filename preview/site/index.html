@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homestead Hyperjump trays</title>
+<script type="importmap">{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/" } }</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d1117;color:#e6edf3;font:14px -apple-system,Segoe UI,sans-serif;height:100dvh;display:flex;flex-direction:column}
+  header{padding:10px 16px;border-bottom:1px solid #30363d;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  select,button,a.b{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font:inherit;text-decoration:none;cursor:pointer}
+  button.p{background:#58a6ff;color:#0d1117;border:0;font-weight:600}
+  #v{flex:1;min-height:0;position:relative} canvas{width:100%;height:100%;display:block}
+  #s{position:absolute;bottom:8px;left:12px;font-size:12px;color:#8b949e}
+</style></head>
+<body>
+<header><b>Homestead Hyperjump</b>
+  <select id="tray"></select>
+  <button class="p" id="dl">⬇ STL</button></header>
+<div id="v"><canvas id="c"></canvas><span id="s">Loading…</span></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+const sel = document.getElementById('tray'), st = document.getElementById('s'), cv = document.getElementById('c');
+const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1117);
+const cam = new THREE.PerspectiveCamera(40, 1, 1, 2000);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
+const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(100, 200, 150); scene.add(dl);
+const ctl = new OrbitControls(cam, cv);
+let mesh, cur;
+function size() { const v = cv.parentElement; r.setSize(v.clientWidth, v.clientHeight, false); cam.aspect = v.clientWidth / v.clientHeight; cam.updateProjectionMatrix(); }
+addEventListener('resize', size); size();
+(function loop() { requestAnimationFrame(loop); ctl.update(); r.render(scene, cam); })();
+async function showAll() {
+  cur = 'all'; if (mesh) scene.remove(mesh);
+  const L = await (await fetch('./pregen/layout.json?' + Date.now())).json();
+  const grp = new THREE.Group(); const [W, D, H] = L.box;
+  const IN = 288, BH = 72, WT = 3;                // measured inner box 288 x 288, ~72 high; design assumes 285 x 285 x 70
+  const add = (x, y, z, w, d, h, color, opacity = 1) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color, transparent: opacity < 1, opacity }));
+    m.position.set(x + w / 2 - IN / 2, z + h / 2, y + d / 2 - IN / 2);
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: 0x000000 })));
+    grp.add(m);
+  };
+  add(-WT, -WT, -2, IN + 2 * WT, IN + 2 * WT, 2, 0x30363d);                           // box floor + translucent walls
+  add(-WT, -WT, 0, IN + 2 * WT, WT, BH, 0x8b949e, 0.25);
+  add(-WT, IN, 0, IN + 2 * WT, WT, BH, 0x8b949e, 0.25);
+  add(-WT, 0, 0, WT, IN, BH, 0x8b949e, 0.25);
+  add(IN, 0, 0, WT, IN, BH, 0x8b949e, 0.25);
+  const other = { characters: 0x388bfd, misc_top: 0x39c5cf, misc_tokens: 0x1f9aa6, cards_small: 0xa0714f, ship: 0xe6edf3 };
+  const deck = { green: 0x3fb950, yellow: 0xe3891d, red: 0xf85149 };
+  const shade = { chance: 0, sector: 0.14, hex: -0.14 };   // same deck colour, three shades
+  for (const t of L.trays) {
+    const [kind, col] = t.name.split('_');
+    const c = new THREE.Color(deck[col] ?? other[t.name]);
+    if (deck[col]) c.offsetHSL(0, 0, shade[kind]);
+    add(t.x, t.y, t.z, t.w, t.d, t.h, c);
+  }
+  const l = L.layers;
+  add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.9);       // 6 player boards
+  add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.9); // 3 booklets
+  add(l.main.x, l.main.y, l.main.z, l.main.w, l.main.d, l.main.h, 0x6e7681, 0.95);                   // main board on top
+  mesh = grp; scene.add(grp);
+  ctl.target.set(0, 35, 0); cam.position.set(320, 260, 380);
+  st.textContent = 'All trays in the box. Top to bottom: main board (grey), booklets (blue, front-left), player boards (purple, back-left), trays. Box drawn at the measured 288 x 288 x 72.';
+}
+async function show(t) {
+  if (t === 'all') return showAll();
+  cur = t; st.textContent = 'Loading ' + t + '…';
+  const g = await new STLLoader().loadAsync(`./pregen/${t}.stl?${Date.now()}`);
+  if (mesh) scene.remove(mesh);
+  mesh = new THREE.Mesh(g, new THREE.MeshPhongMaterial({ color: 0x3a8c8c, flatShading: true }));
+  mesh.rotation.x = -Math.PI / 2;
+  g.computeBoundingBox(); const b = g.boundingBox, c = b.getCenter(new THREE.Vector3()), z = b.getSize(new THREE.Vector3());
+  mesh.position.set(-c.x, -b.min.z, c.y);
+  scene.add(mesh);
+  const d = Math.max(z.x, z.y, z.z) * 2.2; cam.position.set(d * .6, d * .8, d * .8); ctl.target.set(0, z.z / 2, 0);
+  st.textContent = `${t}: ${z.x.toFixed(0)} × ${z.y.toFixed(0)} × ${z.z.toFixed(0)} mm`;
+}
+const trays = (await (await fetch('./pregen/trays.txt')).text()).trim().split('\n');
+sel.add(new Option('ALL trays in box', 'all'));
+for (const t of trays) sel.add(new Option(t.replace(/_/g, ' '), t));
+sel.onchange = () => show(sel.value);
+document.getElementById('dl').onclick = () => { if (cur === 'all') return; const a = document.createElement('a'); a.href = `./pregen/${cur}.stl`; a.download = `hh-${cur}.stl`; a.click(); };
+show('all'); sel.value = 'all';
+</script></body></html>
