@@ -4,6 +4,9 @@
 [Boardgame Insert Toolkit](https://github.com/dppdppd/The-Boardgame-Insert-Toolkit) (BIT).
 Unofficial fan projects; no game artwork or rules are included.
 
+**Try it live:** [thefehr.github.io/boardgame-inserts](https://thefehr.github.io/boardgame-inserts/)
+(browse the trays in 3D, see the fill order, download STLs)
+
 ## Layout
 
 ```
