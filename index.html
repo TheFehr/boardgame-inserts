@@ -1,13 +1,252 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Boardgame inserts</title>
-<style>body{font:16px/1.5 system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem;color:#222}
-a{color:#0b6bcb}li{margin:.6rem 0}small{color:#666}</style></head><body>
-<h1>Boardgame inserts</h1>
-<p>3D-printable storage inserts for board games (OpenSCAD, Boardgame Insert Toolkit). Unofficial fan projects.</p>
-<ul>
-<li><a href="designs/homestead_hyperjump/preview/site/index.html">Homestead Hyperjump</a><br>
-<small>Browse all 14 trays in 3D, see how they fill the box, download the STLs.</small></li>
-</ul>
-<p><a href="https://github.com/TheFehr/boardgame-inserts">Source on GitHub</a> · CC BY-NC-SA 4.0</p>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boardgame Inserts</title>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/"
+    }
+  }
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #30363d;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --accent:  #58a6ff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    padding: 28px 20px 60px;
+  }
+
+  header {
+    max-width: 900px;
+    margin: 0 auto 28px;
+  }
+  .header-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  header p  { color: var(--muted); font-size: 14px; max-width: 60ch; }
+  .gh-link { font-size: 13px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+  .gh-link:hover { text-decoration: underline; }
+
+  .filters {
+    max-width: 900px;
+    margin: 0 auto 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .facet { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .facet-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+  }
+  .pill:hover { border-color: var(--accent); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #0d1117; font-weight: 600; }
+
+  .grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card.hidden { display: none; }
+
+  .card canvas {
+    display: block;
+    width: 100%;
+    height: 220px;
+    background: #05070a;
+  }
+
+  .card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .card h2 { font-size: 17px; font-weight: 600; }
+
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  .blurb { color: var(--text); font-size: 13px; line-height: 1.5; }
+
+  .links { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+  .links a {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .links a:hover { text-decoration: underline; }
+  .links a.primary { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>Boardgame Inserts</h1>
+    <a class="gh-link" href="https://github.com/TheFehr/boardgame-inserts" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+  <p>3D-printable storage inserts for board games, designed in OpenSCAD with the
+    Boardgame Insert Toolkit. Each design is a set of trays with sliding lids that fills the
+    game box in layers. Open a design to browse the trays in 3D and download the STLs.</p>
+</header>
+
+<div class="filters" id="filters"></div>
+<div class="grid" id="gallery"></div>
+
+<script type="module">
+import * as THREE from 'three';
+
+const DESIGNS = [
+  {
+    id: 'homestead_hyperjump',
+    name: 'Homestead Hyperjump',
+    game: 'Homestead Hyperjump',
+    audience: 'Players',
+    printType: ['Single-material'],
+    blurb: "14 trays with sliding hex-pattern lids that fill the 285 x 285 x 72 mm box in layers: " +
+      "cards, hex tiles, cubes, dice, tokens and the assembled ship all have their own well, " +
+      "and the boards, booklets and rule book lie flat on top. Test-printed on a Bambu Lab P2S (256 mm plate).",
+    previewUrl: 'designs/homestead_hyperjump/preview/site/index.html',
+    guideUrl: 'designs/homestead_hyperjump/preview/site/fill-order.png',
+    layoutUrl: 'designs/homestead_hyperjump/preview/site/pregen/layout.json',
+  },
+];
+
+const FACETS = [
+  { key: 'game',      label: 'Game' },
+  { key: 'audience',  label: 'Audience' },
+  { key: 'printType', label: 'Print type' },
+];
+const active = { game: new Set(), audience: new Set(), printType: new Set() };
+const vals = (v) => Array.isArray(v) ? v : [v];
+const facetValues = (key) => [...new Set(DESIGNS.flatMap(d => vals(d[key])))].sort();
+const matchesFilters = (d) => FACETS.every(({ key }) => active[key].size === 0 || vals(d[key]).some(x => active[key].has(x)));
+
+function renderFilters() {
+  const el = document.getElementById('filters');
+  for (const { key, label } of FACETS) {
+    const row = document.createElement('div'); row.className = 'facet';
+    const lbl = document.createElement('span'); lbl.className = 'facet-label'; lbl.textContent = label; row.appendChild(lbl);
+    for (const val of facetValues(key)) {
+      const btn = document.createElement('button'); btn.className = 'pill'; btn.textContent = val;
+      btn.addEventListener('click', () => {
+        active[key].has(val) ? active[key].delete(val) : active[key].add(val);
+        btn.classList.toggle('active');
+        for (const d of DESIGNS) document.getElementById(`card-${d.id}`).classList.toggle('hidden', !matchesFilters(d));
+      });
+      row.appendChild(btn);
+    }
+    el.appendChild(row);
+  }
+}
+
+// Rotating 3D thumbnail: the trays and layers of the design as coloured blocks (from layout.json)
+const viewers = [];
+function makeViewer(canvas, layoutUrl) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x05070a);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(100, 200, 150); scene.add(key);
+  const camera = new THREE.PerspectiveCamera(40, 1, 1, 3000);
+  let group = null, lastW = 0, lastH = 0;
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (w !== lastW || h !== lastH) { lastW = w; lastH = h; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  }
+  fetch(layoutUrl).then(r => r.json()).then(L => {
+    const g = new THREE.Group(), N = 285;
+    const add = (x, y, z, w, d, h, color, opacity = 1) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color, transparent: opacity < 1, opacity }));
+      m.position.set(x + w / 2 - N / 2, z + h / 2, y + d / 2 - N / 2);
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: 0x000000 })));
+      g.add(m);
+    };
+    const other = { characters: 0x388bfd, misc_top: 0x39c5cf, misc_tokens: 0x1f9aa6, cards_small: 0xa0714f, ship: 0xe6edf3 };
+    const deck = { green: 0x3fb950, yellow: 0xe3891d, red: 0xf85149 };
+    const shade = { chance: 0, sector: 0.14, hex: -0.14 };
+    for (const t of L.trays) {
+      const [kind, col] = t.name.split('_'); const c = new THREE.Color(deck[col] ?? other[t.name]);
+      if (deck[col]) c.offsetHSL(0, 0, shade[kind]);
+      add(t.x, t.y, t.z, t.w, t.d, t.h, c);
+    }
+    const l = L.layers;
+    add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.9);
+    add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.9);
+    scene.add(g); group = g;
+    camera.position.set(330, 300, 330); camera.lookAt(0, 30, 0);
+  });
+  return { resize, render() { if (group) group.rotation.y += 0.005; renderer.render(scene, camera); } };
+}
+
+function renderCards() {
+  const gallery = document.getElementById('gallery');
+  for (const d of DESIGNS) {
+    const card = document.createElement('div'); card.className = 'card'; card.id = `card-${d.id}`;
+    const canvas = document.createElement('canvas'); card.appendChild(canvas);
+    const body = document.createElement('div'); body.className = 'card-body';
+    const tags = [d.game, d.audience, ...vals(d.printType)];
+    body.innerHTML = `
+      <h2>${d.name}</h2>
+      <div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      <p class="blurb">${d.blurb}</p>
+      <div class="links">
+        <a class="primary" href="${d.previewUrl}">Browse trays &amp; download STLs &rarr;</a>
+        <a href="${d.guideUrl}">Packing guide (fill order) &rarr;</a>
+      </div>`;
+    card.appendChild(body); gallery.appendChild(card);
+    viewers.push(makeViewer(canvas, d.layoutUrl));
+  }
+}
+(function animate() { requestAnimationFrame(animate); for (const v of viewers) { v.resize(); v.render(); } })();
+renderFilters(); renderCards();
+</script>
+
+</body>
+</html>

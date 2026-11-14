@@ -61,10 +61,11 @@ async function showAll() {
   const l = L.layers;
   add(l.boards.x, l.boards.y, l.boards.z, l.boards.w, l.boards.d, l.boards.h, 0x9a6bd1, 0.9);       // 6 player boards
   add(l.booklets.x, l.booklets.y, l.booklets.z, l.booklets.w, l.booklets.d, l.booklets.h, 0x2f81f7, 0.9); // 3 booklets
+  add(l.rulebook.x, l.rulebook.y, l.rulebook.z, l.rulebook.w, l.rulebook.d, l.rulebook.h, 0xd29922, 0.9);   // rule book
   add(l.main.x, l.main.y, l.main.z, l.main.w, l.main.d, l.main.h, 0x6e7681, 0.95);                   // main board on top
   mesh = grp; scene.add(grp);
   ctl.target.set(0, 35, 0); cam.position.set(320, 260, 380);
-  st.textContent = 'All trays in the box. Top to bottom: main board (grey), booklets (blue, front-left), player boards (purple, back-left), trays. Box drawn at the measured 288 x 288 x 72.';
+  st.textContent = 'All trays in the box. Top to bottom: main board (grey), rule book (gold), booklets (blue, front-left), player boards (purple, back-left), trays. Box drawn at the measured 288 x 288 x 72.';
 }
 async function show(t) {
   if (t === 'all') return showAll();
