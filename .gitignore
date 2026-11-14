@@ -1,8 +1,8 @@
 build/
 __pycache__/
-preview/site/dist/
-preview/site/live.html
-preview/site/lib
-preview/site/my_designs
-preview/site/*.jpg
-preview/site/misc-tray.png
+**/preview/site/dist/
+**/preview/site/live.html
+**/preview/site/lib
+**/preview/site/my_designs
+**/preview/site/*.jpg
+**/preview/site/misc-tray.png

@@ -1,7 +1,7 @@
 // Homestead Hyperjump insert (Boardgame Insert Toolkit).
 // Dimensions come from the measurements table (see vault note
 // homestead-hyperjump-measurements). Unsleeved cards.
-include <../lib/boardgame_insert_toolkit_lib.4.13.0.scad>;
+include <../../lib/boardgame_insert_toolkit_lib.4.13.0.scad>;
 
 /* [Tray] */
 // Which tray to render (each prints on its own, bed 256 x 256)

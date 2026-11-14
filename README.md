@@ -1,39 +1,26 @@
-# Homestead Hyperjump insert
+# Boardgame inserts
 
-A 3D-printable storage insert for the board game **Homestead Hyperjump**, made with the
-[Boardgame Insert Toolkit](https://github.com/dppdppd/The-Boardgame-Insert-Toolkit) (OpenSCAD).
-It is an unofficial fan project. No game artwork or rules are included.
+3D-printable storage inserts for board games, designed in OpenSCAD with the
+[Boardgame Insert Toolkit](https://github.com/dppdppd/The-Boardgame-Insert-Toolkit) (BIT).
+Unofficial fan projects; no game artwork or rules are included.
 
-14 trays with sliding hex-pattern lids fill the 285 x 285 x 72 mm box in layers:
+## Layout
 
-![fill order](preview/site/fill-order.png)
+```
+lib/                  the BIT library (shared)
+docs/                 BIT quick references
+designs/<game>/       one folder per game
+  <game>.scad           the design, measurements at the top
+  preview/              ready-made STLs, layout check, packing guide
+```
 
-## Print
+## Designs
 
-Download the ready-made STLs from `preview/site/pregen/` (one per tray). Chance, Sector Data and hex
-trays are identical in all three colours, so print them in whatever filament you like.
+### homestead_hyperjump
 
-Tested on a Bambu Lab P2S (256 x 256 mm plate): tolerance 0.15, wall 2, pad 0.5, 0.2 mm layers.
-The largest tray (characters) is 240 x 251 mm.
-
-| Tray | Holds |
-|---|---|
-| chance_* | Chance cards |
-| sector_* | Sector Data cards |
-| hex_* | 19 hex tiles per colour |
-| characters | Character cards, SOS, Died/Android, Micro-Expansion, 6 colours of cubes |
-| misc_tokens | 30 round tokens |
-| misc_top | D6, red cube, 2 d8, gold cubes, credit bars |
-| cards_small | Salvage and Assignment cards |
-| ship | assembled ship |
-
-## Rebuild
-
-`my_designs/homestead_hyperjump.scad` is the design (all measurements are at the top).
-`preview/pregen.sh` renders every tray with OpenSCAD (nightly build), `preview/layout.py` checks that
-everything fits in the box, `preview/fill.py` redraws the fill-order picture.
-Measured on my copy of the game; check the numbers against yours before printing.
+`designs/homestead_hyperjump/`: 14 trays with sliding lids that fill the box in layers.
+See [its README](designs/homestead_hyperjump/README.md) for the packing guide and print settings.
 
 ## License
 
-[CC BY-NC-SA 4.0](LICENSE), same as the Boardgame Insert Toolkit library in `lib/`.
+[CC BY-NC-SA 4.0](LICENSE), same as the BIT library.
