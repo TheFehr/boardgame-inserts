@@ -16,12 +16,16 @@
 <body>
 <header><b>Homestead Hyperjump</b>
   <select id="tray"></select>
-  <button class="p" id="dl">⬇ STL</button></header>
+  <button class="p" id="dl">⬇ STL</button>
+  <a id="var" style="margin-left:auto;color:#58a6ff;font-size:13px"></a></header>
 <div id="v"><canvas id="c"></canvas><span id="s">Loading…</span></div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+const P = new URLSearchParams(location.search).has('labels') ? 'pregen_labels' : 'pregen';   // ?labels = local spike with engraved labels
+const LAB = P === 'pregen_labels';
+const vr = document.getElementById('var'); vr.href = LAB ? '?' : '?labels=1'; vr.textContent = LAB ? '← plain trays (tested)' : 'Labelled variant (untested) →';
 const sel = document.getElementById('tray'), st = document.getElementById('s'), cv = document.getElementById('c');
 const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1117);
@@ -57,7 +61,7 @@ async function showAll(layers = true) {
     const [kind, col] = t.name.split('_');
     const c = new THREE.Color(deck[col] ?? other[t.name]);
     if (deck[col]) c.offsetHSL(0, 0, shade[kind]);
-    const g = await new STLLoader().loadAsync(`./pregen/box/${t.name}.stl`);
+    const g = await new STLLoader().loadAsync(`./${P}/box/${t.name}.stl`);
     g.applyMatrix4(swap); g.translate(t.x - IN / 2, t.z, t.y - IN / 2);
     grp.add(new THREE.Mesh(g, new THREE.MeshPhongMaterial({ color: c, flatShading: true, side: THREE.DoubleSide })));
   }));
@@ -76,7 +80,7 @@ async function show(t) {
   if (t === 'all') return showAll();
   if (t === 'trays') return showAll(false);
   cur = t; st.textContent = 'Loading ' + t + '…';
-  const g = await new STLLoader().loadAsync(`./pregen/${t}.stl?${Date.now()}`);
+  const g = await new STLLoader().loadAsync(`./${P}/${t}.stl?${Date.now()}`);
   if (mesh) scene.remove(mesh);
   mesh = new THREE.Mesh(g, new THREE.MeshPhongMaterial({ color: 0x3a8c8c, flatShading: true }));
   mesh.rotation.x = -Math.PI / 2;
@@ -91,6 +95,6 @@ sel.add(new Option('ALL trays in box', 'all'));
 sel.add(new Option('ALL trays, without the top layers', 'trays'));
 for (const t of trays) sel.add(new Option(t.replace(/_/g, ' '), t));
 sel.onchange = () => show(sel.value);
-document.getElementById('dl').onclick = () => { if (cur === 'all' || cur === 'trays') return; const a = document.createElement('a'); a.href = `./pregen/${cur}.stl`; a.download = `hh-${cur}.stl`; a.click(); };
+document.getElementById('dl').onclick = () => { if (cur === 'all' || cur === 'trays') return; const a = document.createElement('a'); a.href = `./${P}/${cur}.stl`; a.download = `hh-${cur}.stl`; a.click(); };
 show('trays'); sel.value = 'trays';
 </script></body></html>

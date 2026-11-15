@@ -245,6 +245,7 @@ function renderCards() {
       <div class="links">
         <a class="primary" href="${d.previewUrl}">Browse trays &amp; download STLs &rarr;</a>
         <a href="${d.guideUrl}">Packing guide (fill order) &rarr;</a>
+        <a href="${d.previewUrl}?labels=1">Labelled variant (untested) &rarr;</a>
       </div>`;
     card.appendChild(body); gallery.appendChild(card);
     viewers.push(makeViewer(canvas, d.layoutUrl));

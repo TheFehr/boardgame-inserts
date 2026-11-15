@@ -16,4 +16,11 @@ for t in $TRAYS; do
   echo "== box $t"
   /snap/bin/openscad-nightly -D "tray=\"$t\"" -D '$g_print_types="box"' --export-format=binstl -o "$OUT/box/$t.stl" homestead_hyperjump.scad 2>&1 | grep -E 'ERROR' || true
 done
+# UNTESTED labelled variant (engraved lid and well labels)
+mkdir -p "$OUT/../pregen_labels/box"
+for t in $TRAYS; do
+  echo "== labels $t"
+  /snap/bin/openscad-nightly -D "tray=\"$t\"" -D labels=true --export-format=binstl -o "$OUT/../pregen_labels/$t.stl" homestead_hyperjump.scad 2>&1 | grep -E 'ERROR' || true
+  /snap/bin/openscad-nightly -D "tray=\"$t\"" -D labels=true -D '$g_print_types="box"' --export-format=binstl -o "$OUT/../pregen_labels/box/$t.stl" homestead_hyperjump.scad 2>&1 | grep -E 'ERROR' || true
+done
 echo "$TRAYS" | tr ' ' '\n' > "$OUT/trays.txt"

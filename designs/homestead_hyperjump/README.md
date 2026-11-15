@@ -27,6 +27,12 @@ The largest tray (characters) is 240 x 251 mm.
 | cards_small | Salvage and Assignment cards |
 | ship | assembled ship |
 
+## Labelled variant (untested)
+
+`preview/site/pregen_labels/` has the same 14 trays with the name of the contents engraved on every lid
+(a solid band across the hex pattern) and on every well floor. This variant has not been printed yet; the plain
+trays above are the tested ones. Browse it in the viewer with `?labels=1`, or render it yourself with `-D labels=true`.
+
 ## Rebuild
 
 `homestead_hyperjump.scad` is the design (all measurements are at the top).

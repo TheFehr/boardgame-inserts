@@ -20,6 +20,8 @@ player_boards = 22.9; // 6 boards, 240 x 125, back-left (caliper tray+boards 45.
 char_tray = 23;      // characters tray is printed at 23 mm; boards end 4 mm under the booklets
 
 /* [Print] */
+// Engrave what each well and each lid is for. UNTESTED variant: the plain trays are the print-tested ones.
+labels = false;
 wall_thickness = 2; // [1:0.1:4]
 tolerance = 0.15; // [0:0.05:0.5]
 // Extra room around every compartment
@@ -68,8 +70,10 @@ function tray_cmp(t) = tray_total(t) - 3*wall;
 cmp_h = tray_cmp(tray);
 box_urz = cmp_h + 2*wall;   // the sliding lid adds one more wall on top
 
-function feat(name, w, d, x, y, cut=false, cut_pct=100, cz=undef) = [ BOX_FEATURE,
+function lab(txt) = labels && !is_undef(txt) ? [ [ LABEL, [ LBL_TEXT, txt ], [ LBL_DEPTH, 0.4 ] ] ] : [];
+function feat(name, w, d, x, y, cut=false, cut_pct=100, cz=undef, lb=undef) = [ BOX_FEATURE,
     [ NAME, name ],
+    each lab(is_undef(lb) ? name : lb),
     [ FTR_COMPARTMENT_SIZE_XYZ, [w + pad, d + pad, is_undef(cz) ? cmp_h : cz] ],   // cz < cmp_h lifts the well floor
     [ POSITION_XY, [x, y] ],
     [ FTR_CUTOUT_SIDES_4B, [cut, false, false, false] ],
@@ -77,6 +81,7 @@ function feat(name, w, d, x, y, cut=false, cut_pct=100, cz=undef) = [ BOX_FEATUR
 ];
 function hex_feat(name, x, y) = [ BOX_FEATURE,
     [ NAME, name ],
+    each lab(name),
     [ FTR_COMPARTMENT_SIZE_XYZ, [hex_w + 1, hex_w + 1, cmp_h] ],
     [ POSITION_XY, [x, y] ],
     [ FTR_SHAPE, HEX ],
@@ -85,6 +90,7 @@ function hex_feat(name, x, y) = [ BOX_FEATURE,
 ];
 function round_feat(name, d, x, y) = [ BOX_FEATURE,
     [ NAME, name ],
+    each lab(name),
     [ FTR_COMPARTMENT_SIZE_XYZ, [d + pad, d + pad, cmp_h] ],
     [ POSITION_XY, [x, y] ],
     [ FTR_SHAPE, ROUND ],
@@ -137,6 +143,14 @@ function tray_fill(t) =
     /* ship */          [57, 2*wall + ship_l + pad];
 function tray_size(t) = [ tray_fill(t)[0], tray_fill(t)[1], box_urz ];
 
+function tray_title(t) =
+    t == "chance_green" ? "Chance (green)" : t == "chance_yellow" ? "Chance (yellow)" : t == "chance_red" ? "Chance (red)" :
+    t == "sector_green" ? "Sector Data (green)" : t == "sector_yellow" ? "Sector Data (yellow)" : t == "sector_red" ? "Sector Data (red)" :
+    t == "hex_green" ? "Hex tiles (green)" : t == "hex_yellow" ? "Hex tiles (yellow)" : t == "hex_red" ? "Hex tiles (red)" :
+    t == "characters" ? "Characters, Micro-Expansion, cubes" :
+    t == "misc_tokens" ? "Tokens" : t == "misc_top" ? "Dice, bars, gold cubes" :
+    t == "cards_small" ? "Salvage | Assignment" : "Ship";
+
 data = [
     [ G_TOLERANCE, tolerance ],
     [ G_WALL_THICKNESS, wall ],
@@ -149,6 +163,7 @@ data = [
             [ LID_SLIDE_SIDE, FRONT ],
             [ LID_PATTERN_RADIUS, 8 ],
             [ LID_PATTERN_THICKNESS, 1.6 ],   // rib width; default 0.5 was flimsy
+            each (labels ? [ [ LABEL, [ LBL_TEXT, tray_title(tray) ], [ LBL_DEPTH, 0.6 ] ] ] : []),
         ],
     ],
 ];
